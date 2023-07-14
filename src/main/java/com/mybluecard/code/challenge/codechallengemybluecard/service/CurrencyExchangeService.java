@@ -1,5 +1,6 @@
 package com.mybluecard.code.challenge.codechallengemybluecard.service;
 
+import com.mybluecard.code.challenge.codechallengemybluecard.config.RapidApiProperties;
 import com.mybluecard.code.challenge.codechallengemybluecard.domain.ConverterResponse;
 import com.mybluecard.code.challenge.codechallengemybluecard.domain.CurrencyExchange;
 import com.mybluecard.code.challenge.codechallengemybluecard.domain.CurrencyValues;
@@ -23,6 +24,9 @@ public class CurrencyExchangeService {
     private CurrencyExchangeRepository currencyExchangeRepository;
 
     @Autowired
+    private RapidApiProperties rapidApiProperties;
+
+    @Autowired
     private CurrencyValuesRepository currencyValuesRepository;
 
     public CurrencyExchange saveConversion(CurrencyExchange currencyExchange) {
@@ -44,7 +48,7 @@ public class CurrencyExchangeService {
             CurrencyValues currencyValues = currencyValuesRepository.findByOriginCurrencyAndTargetCurrency(originCurrency, targetCurrency).orElse(null);
 
             if(currencyValues != null ) {
-                BigDecimal targetResult = originAmount.multiply(currencyValues.getCurrencyValue());
+                BigDecimal targetResult = getTargetResult(originAmount, currencyValues);
 
                 CurrencyExchange currencyExchange = new CurrencyExchange();
                 currencyExchange.setOriginCurrency(originCurrency);
@@ -68,10 +72,10 @@ public class CurrencyExchangeService {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-RapidAPI-Key", "5e8751059cmshb63e0440d0d16ecp1c42b9jsn74d9f4485f44"); // Replace with your RapidAPI key
-            headers.set("X-RapidAPI-Host", "community-neutrino-currency-conversion.p.rapidapi.com");
+            headers.set("X-RapidAPI-Key", rapidApiProperties.getApiKey()); // Replace with your RapidAPI key
+            headers.set("X-RapidAPI-Host", rapidApiProperties.getApiHost());
             RestTemplate restTemplate = new RestTemplate();
-            String apiUrl = "https://community-neutrino-currency-conversion.p.rapidapi.com/convert" + "?from-value=" + originAmount + "&from-type=" + originCurrency + "&to-type=" + targetCurrency;
+            String apiUrl = rapidApiProperties.getApiUrl() + "/convert" + "?from-value=" + originAmount + "&from-type=" + originCurrency + "&to-type=" + targetCurrency;
             ResponseEntity<ConverterResponse> responseEntity = restTemplate.exchange(
                     apiUrl,
                     HttpMethod.POST,
@@ -84,7 +88,7 @@ public class CurrencyExchangeService {
             if(response != null ){
                 currencyExchange = saveConversion(response.toCurrencyExchange());
 
-                BigDecimal currencyValue = currencyExchange.getTargetValue().divide(originAmount);
+                BigDecimal currencyValue = getCurrencyValue(originAmount, currencyExchange);
 
                 CurrencyValues currencyValues = new CurrencyValues();
                 currencyValues.setCurrencyValue(currencyValue);
@@ -98,6 +102,14 @@ public class CurrencyExchangeService {
             System.out.println("ERROR trying to get conversion from API : " + e.getMessage());
             throw new RuntimeException(e);
         }
+    }
+
+    public BigDecimal getCurrencyValue(BigDecimal originAmount, CurrencyExchange currencyExchange) {
+        return currencyExchange.getTargetValue().divide(originAmount);
+    }
+
+    public BigDecimal getTargetResult(BigDecimal originAmount, CurrencyValues currencyValues) {
+        return originAmount.multiply(currencyValues.getCurrencyValue());
     }
 
 }
