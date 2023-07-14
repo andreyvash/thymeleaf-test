@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${title}">TITLE</title>
+</head>
+<body>
+
+<h1 th:text="${title}">TITLE</h1>
+<br/>
+<form action="/convert" method="post">
+    <label for="originCurrency">Currency of Origin:</label>
+    <input type="text" id="originCurrency" name="originCurrency" required>
+    <label for="originAmount">Origin amount:</label>
+    <input type="number" id="originAmount" name="originAmount" required>
+    <label for="originAmount">Target currency:</label>
+    <input type="text" id="targetCurrency" name="targetCurrency" required>
+    <label for="originAmount">Target amount:</label>
+    <input type="number" id="targetAmount" name="targetAmount" required>
+    <button type="submit">Convert</button>
+</form>
+<br/>
+<table>
+    <thead>
+    <tr>
+        <th>Id</th>
+        <th>Origin Currency</th>
+        <th>Amount Origin</th>
+        <th>Target Currency</th>
+        <th>Amount Target</th>
+        <th>Date Conversion</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="conversion: ${conversions}">
+        <td th:text="${conversion.id}"></td>
+        <td th:text="${conversion.originCurrency}"></td>
+        <td th:text="${conversion.originValue}"></td>
+        <td th:text="${conversion.targetCurrency}"></td>
+        <td th:text="${conversion.targetValue}"></td>
+        <td th:text="${conversion.converterDate}"></td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
